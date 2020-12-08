@@ -7,9 +7,10 @@ let problems = [
     ("Day 5", Day5.main),
     ("Day 6", Day6.main),
     ("Day 7", Day7.main),
+    ("Day 8", Day8.main),
 ]
 
-let runAll = true
+let runAll = false
 
 if runAll {
     problems.forEach { (label, fn) in

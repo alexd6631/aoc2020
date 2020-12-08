@@ -53,3 +53,38 @@ extension StringProtocol {
         components(separatedBy: "\n\n").filter { !$0.isEmpty }
     }
 }
+
+
+public struct LazyInspectSequence<Base: Sequence>: LazySequenceProtocol {
+    let base: Base
+    let block: (Base.Element) -> ()
+
+    public struct Iterator: IteratorProtocol {
+        var base: Base.Iterator
+        let block: (Base.Element) -> ()
+        mutating public func next() -> Base.Element? {
+            let next = base.next()
+            if let next = next {
+                block(next)
+            }
+            return next
+        }
+    }
+
+    public func makeIterator() -> Iterator {
+        Iterator(base: base.makeIterator(), block: block)
+    }
+}
+
+public extension LazySequenceProtocol {
+    func inspect(_ block: @escaping (Element) -> ()) -> LazyInspectSequence<Self> {
+        LazyInspectSequence(base: self, block: block)
+    }
+}
+
+public extension Sequence {
+    func inspect(_ block: @escaping (Element) -> ()) -> Self {
+        forEach(block)
+        return self
+    }
+}
