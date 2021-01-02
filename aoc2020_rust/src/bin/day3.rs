@@ -54,8 +54,8 @@ fn compute2(grid: &Grid) -> usize {
 fn compute_old(grid: &Grid, slope: (usize, usize)) -> u32 {
     let mut pos = (0usize, 0usize);
     let mut count = 0;
-    while let Some(isTree) = grid.is_tree(pos) {
-        if isTree { count += 1 }
+    while let Some(is_tree) = grid.is_tree(pos) {
+        if is_tree { count += 1 }
         pos.0 += slope.0;
         pos.1 += slope.1;
     }

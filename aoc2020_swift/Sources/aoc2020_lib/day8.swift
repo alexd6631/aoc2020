@@ -11,6 +11,7 @@ public enum Day8 {
     public static func main() throws {
         let input = try String(contentsOfFile: "day8.txt", encoding: .utf8)
         let instructions = try parseInstructions(input)
+
         print(compute1(instructions))
         print(compute2(instructions)!)
     }
@@ -28,11 +29,11 @@ public enum Day8 {
             if case .nop = inst.type { return i } else { return nil }
         }
 
-        let res = findTerminated(jumps.lazy.map { jIndex in
+        let res = findTerminating(jumps.lazy.map { jIndex in
             var newInstructions = instructions
             newInstructions[jIndex].type = .nop
             return newInstructions
-        }) ?? findTerminated(nops.lazy.map { nIndex in
+        }) ?? findTerminating(nops.lazy.map { nIndex in
             var newInstructions = instructions
             newInstructions[nIndex].type = .jmp
             return newInstructions
@@ -41,50 +42,24 @@ public enum Day8 {
         return res
     }
 
-    enum ProgramStatus {
-        case loop
-        case terminated
+    static func findTerminating<S: Sequence>(_ instructions:  S) -> Int? where S.Element == [Instruction] {
+        instructions
+            .map { runInstructions($0) }
+            .first { $0.0 }?.1
     }
 
-    static func findTerminated<S: Sequence>(_ instructions:  S) -> Int? where S.Element == [Instruction] {
-        instructions.map {
-            runInstructions($0)
-        }.first {
-            $0.0 == .terminated
-        }?.1
-    }
-
-    static func runInstructions(_ instructions:  [Instruction]) -> (ProgramStatus, Int) {
+    static func runInstructions(_ instructions:  [Instruction]) -> (Bool, Int) {
         var cpu = Cpu(acc: 0, pc: 0)
-        var visited = Set<Int>(arrayLiteral: 0)
-
-        while true {
-            cpu.execute(instructions[cpu.pc])
-            if visited.contains(cpu.pc) {
-                return (.loop, cpu.acc)
-            }
-            visited.insert(cpu.pc)
-            if cpu.pc >= instructions.count {
-                return (.terminated, cpu.acc)
-            }
-        }
+        return cpu.runInstructions(instructions)
     }
 
     static func parseInstructions(_ input: String) throws -> [Instruction] {
         try input.splitLines().map { line in
             let parts = line.components(separatedBy: .whitespaces)
-            let opType: Instruction.OpType
-            guard let n = Int(parts[1]) else { throw Errors.unparseableInput(line) }
-            switch parts[0]{
-            case "nop":
-                opType = .nop
-            case "acc":
-                opType = .acc
-            case "jmp":
-                opType = .jmp
-            default:
-                throw Errors.unparseableInput(line)
-            }
+            
+            guard let opType = Instruction.OpType.from(string: parts[0]),
+                  let n = Int(parts[1]) else { throw Errors.unparseableInput(line) }
+
             return Instruction(type: opType, n: n)
         }
     }
@@ -94,6 +69,19 @@ public enum Day8 {
             case nop
             case acc
             case jmp
+
+            static func from(string: String) -> OpType? {
+                switch string{
+                case "nop":
+                    return .nop
+                case "acc":
+                    return .acc
+                case "jmp":
+                    return .jmp
+                default:
+                    return nil
+                }
+            }
         }
 
         var type: OpType
@@ -114,6 +102,19 @@ public enum Day8 {
             case .jmp:
                 pc += instruction.n
             }
+        }
+
+        mutating func runInstructions(_ instructions:  [Instruction]) -> (Bool, Int) {
+            var visited = [Bool](repeating: false, count: instructions.count)
+
+            while pc < instructions.count {
+                if visited[pc] { return (false, acc) }
+                visited[pc] = true
+
+                execute(instructions[pc])
+            }
+
+            return (true, acc)
         }
     }
 }

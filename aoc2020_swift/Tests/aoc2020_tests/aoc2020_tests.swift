@@ -70,3 +70,14 @@ final class aoc2020_TestsDay7: XCTestCase {
         
     }
 }
+
+
+
+final class aoc2020_TestsDay12: XCTestCase {
+    func testShip() throws {
+        var ship = Day12.Ship()
+
+        ship.apply(move: Day12.Move(kind: .rotate(.left), value: 270))
+        print(ship)
+    }
+}

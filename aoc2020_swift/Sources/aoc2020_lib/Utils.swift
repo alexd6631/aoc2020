@@ -88,3 +88,11 @@ public extension Sequence {
         return self
     }
 }
+
+infix operator ..
+
+func ..<T>(value: T, f: (inout T) -> ()) -> T {
+    var copy = value
+    f(&copy)
+    return copy
+}
